@@ -1,0 +1,245 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite fallback (local dev without PostgreSQL):
+// datasource db {
+//   provider = "sqlite"
+//   url      = "file:./dev.db"
+// }
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  NEW
+  PROCESSING
+  DELIVERING
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentType {
+  CASH
+  CARD
+  BANK_TRANSFER
+}
+
+model User {
+  id           String   @id @default(cuid())
+  firstName    String
+  lastName     String
+  phone        String   @unique
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(USER)
+  avatar       String?
+  isBlocked    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orders        Order[]
+  favorites     Favorite[]
+  notifications Notification[]
+  compareList   CompareItem[]
+
+  @@map("users")
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String
+  slug     String    @unique
+  image    String?
+  order    Int       @default(0)
+  products Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id            String   @id @default(cuid())
+  categoryId    String
+  name          String
+  slug          String   @unique
+  description   String?
+  price         Float
+  unit          String   @default("kg") // kg, tonna, metr, dona
+  imageUrls     String[]
+  stock         Int      @default(0)
+  isPopular     Boolean  @default(false)
+  weightPerUnit Float?   // kalkulyator uchun
+  metalTypeId   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  category    Category     @relation(fields: [categoryId], references: [id])
+  metalType   MetalType?   @relation(fields: [metalTypeId], references: [id])
+  favorites   Favorite[]
+  orderItems  OrderItem[]
+  compareList CompareItem[]
+
+  @@map("products")
+}
+
+model MetalType {
+  id                 String    @id @default(cuid())
+  name               String
+  densityCoefficient Float     // kg/m³, masalan po'lat = 7850
+  products           Product[]
+
+  @@map("metal_types")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("favorites")
+}
+
+model CompareItem {
+  id        String   @id @default(cuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("compare_items")
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  userId      String
+  fullName    String
+  phone       String
+  email       String
+  address     String
+  paymentType PaymentType @default(CASH)
+  status      OrderStatus @default(NEW)
+  totalPrice  Float
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user  User        @relation(fields: [userId], references: [id])
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Float
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?  // null = barcha foydalanuvchilarga
+  title     String
+  message   String
+  type      String   @default("general") // general, order, product, blog
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  content     String
+  excerpt     String?
+  image       String?
+  author      String
+  tags        String[]
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("blog_posts")
+}
+
+model SiteSettings {
+  id          String   @id @default(cuid())
+  phone       String[]
+  address     String
+  workHours   String
+  email       String?
+  telegram    String?
+  instagram   String?
+  facebook    String?
+  updatedAt   DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+enum DebtStatus {
+  ACTIVE    // To'lanmagan
+  PARTIAL   // Qisman to'langan
+  PAID      // To'liq to'langan
+}
+
+enum CreditorType {
+  COMPANY   // Kompaniya
+  PERSON    // Jismoniy shaxs
+}
+
+model Debt {
+  id            String      @id @default(cuid())
+  creditorName  String      // Kreditor nomi
+  creditorType  CreditorType @default(COMPANY)
+  phone         String?     // Telefon raqam
+  description   String?     // Qarz haqida qo'shimcha ma'lumot
+  totalAmount   Float       // Jami qarz summasi
+  paidAmount    Float       @default(0) // To'langan summa
+  status        DebtStatus  @default(ACTIVE)
+  dueDate       DateTime?   // To'lash muddati
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  payments      DebtPayment[]
+
+  @@map("debts")
+}
+
+model DebtPayment {
+  id        String   @id @default(cuid())
+  debtId    String
+  amount    Float    // To'langan summa
+  date      DateTime @default(now())
+  note      String?  // To'lov haqida izoh
+  createdAt DateTime @default(now())
+
+  debt      Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+
+  @@map("debt_payments")
+}
