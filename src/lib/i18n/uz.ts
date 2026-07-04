@@ -1200,7 +1200,17 @@ const uz = {
     densityAluminum: "Alyuminiy",
     densityCopper: "Mis",
   },
-} as const;
+};
 
-export type Translations = typeof uz;
+type DeepWiden<T> = T extends string
+  ? string
+  : T extends readonly (infer U)[]
+  ? U extends string
+    ? string[]
+    : DeepWiden<U>[]
+  : T extends object
+  ? { -readonly [K in keyof T]: DeepWiden<T[K]> }
+  : T;
+
+export type Translations = DeepWiden<typeof uz>;
 export default uz;

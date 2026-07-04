@@ -58,7 +58,7 @@ export default function FeaturesSection() {
                   <Icon size={22} className={feature.color} />
                 </div>
                 <h3 className="font-semibold text-text-primary mb-2">{feature.title}</h3>
-                <p className="text-text-muted text-sm leading-relaxed">{feature.description}</p>
+                <p className="text-text-muted text-sm leading-relaxed">{feature.desc}</p>
               </div>
             );
           })}
