@@ -941,6 +941,8 @@ const uz = {
     cancel: "Bekor qilish",
     save: "Saqlash",
     add: "Qo'shish",
+    viewTable: "Jadval ko'rinishi",
+    viewGrid: "Kartochka ko'rinishi",
     tableEmployee: "Xodim",
     tablePosition: "Lavozim",
     tableDepartment: "Bo'lim",

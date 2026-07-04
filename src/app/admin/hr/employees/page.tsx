@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Pencil, Trash2, X, Save, Loader2, Phone, User, Briefcase } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Save, Loader2, Phone, User, Briefcase, List, Grid3X3 } from "lucide-react";
 import { useHRStore } from "@/store/hrStore";
 import { formatPrice, formatPhoneNumber } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -14,6 +14,7 @@ export default function HREmployeesPage() {
   const departments = t.adminHr.departments;
   const positions = t.adminHr.positions;
   const { employees, addEmployee, updateEmployee, deleteEmployee } = useHRStore();
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [showModal, setShowModal] = useState(false);
   const [editEmp, setEditEmp] = useState<Employee | null>(null);
   const [saving, setSaving] = useState(false);
@@ -63,9 +64,27 @@ export default function HREmployeesPage() {
           </h1>
           <p className="text-text-muted text-sm mt-1">{employees.length} {t.adminHr.employeesCount} · {employees.filter(e => e.status === "active").length} {t.adminHr.activeCount}</p>
         </div>
-        <button onClick={openAdd} className="btn-primary flex items-center gap-2 text-sm">
-          <Plus size={18} /> {t.adminHr.addEmployee}
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex border border-border rounded-xl overflow-hidden">
+            <button
+              onClick={() => setViewMode("table")}
+              title={t.adminHr.viewTable}
+              className={`p-2.5 transition-colors ${viewMode === "table" ? "bg-accent-gold text-bg-primary" : "bg-bg-card text-text-muted hover:text-text-primary"}`}
+            >
+              <List size={17} />
+            </button>
+            <button
+              onClick={() => setViewMode("grid")}
+              title={t.adminHr.viewGrid}
+              className={`p-2.5 transition-colors ${viewMode === "grid" ? "bg-accent-gold text-bg-primary" : "bg-bg-card text-text-muted hover:text-text-primary"}`}
+            >
+              <Grid3X3 size={17} />
+            </button>
+          </div>
+          <button onClick={openAdd} className="btn-primary flex items-center gap-2 text-sm">
+            <Plus size={18} /> {t.adminHr.addEmployee}
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -81,46 +100,69 @@ export default function HREmployeesPage() {
         })}
       </div>
 
-      <div className="card overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border">
-              {[t.adminHr.tableEmployee, t.adminHr.tablePosition, t.adminHr.tableDepartment, t.adminHr.tablePhone, t.adminHr.tableSalary, t.adminHr.tableStatus, ""].map((h) => (
-                <th key={h} className="text-left py-4 px-4 text-text-muted text-xs font-medium">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {employees.map((emp) => (
-              <tr key={emp.id} className="border-b border-border/50 hover:bg-bg-panel/50 transition-colors">
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-purple-400/20 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-purple-400 font-bold text-sm">{emp.name[0]}</span>
-                    </div>
-                    <p className="text-text-primary text-sm font-medium">{emp.name}</p>
-                  </div>
-                </td>
-                <td className="py-3 px-4 text-text-secondary text-sm">{emp.position}</td>
-                <td className="py-3 px-4 text-text-secondary text-sm">{emp.department}</td>
-                <td className="py-3 px-4 text-text-secondary text-sm">{emp.phone}</td>
-                <td className="py-3 px-4 text-accent-gold text-sm font-bold">{formatPrice(emp.salary)}</td>
-                <td className="py-3 px-4">
-                  <span className={`text-xs px-2 py-1 rounded-full border ${emp.status === "active" ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
-                    {emp.status === "active" ? t.adminHr.activeStatus : t.adminHr.inactiveStatus}
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <div className="flex gap-1">
-                    <button onClick={() => openEdit(emp)} className="p-1.5 rounded-lg hover:bg-bg-card text-text-muted hover:text-accent-gold transition-all"><Pencil size={15} /></button>
-                    <button onClick={() => handleDelete(emp.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-text-muted hover:text-red-400 transition-all"><Trash2 size={15} /></button>
-                  </div>
-                </td>
+      {viewMode === "table" ? (
+        <div className="card overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border">
+                {[t.adminHr.tableEmployee, t.adminHr.tablePosition, t.adminHr.tableDepartment, t.adminHr.tablePhone, t.adminHr.tableSalary, t.adminHr.tableStatus, ""].map((h) => (
+                  <th key={h} className="text-left py-4 px-4 text-text-muted text-xs font-medium">{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {employees.map((emp) => (
+                <tr key={emp.id} className="border-b border-border/50 hover:bg-bg-panel/50 transition-colors">
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-purple-400/20 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-purple-400 font-bold text-sm">{emp.name[0]}</span>
+                      </div>
+                      <p className="text-text-primary text-sm font-medium">{emp.name}</p>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4 text-text-secondary text-sm">{emp.position}</td>
+                  <td className="py-3 px-4 text-text-secondary text-sm">{emp.department}</td>
+                  <td className="py-3 px-4 text-text-secondary text-sm">{emp.phone}</td>
+                  <td className="py-3 px-4 text-accent-gold text-sm font-bold">{formatPrice(emp.salary)}</td>
+                  <td className="py-3 px-4">
+                    <span className={`text-xs px-2 py-1 rounded-full border ${emp.status === "active" ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
+                      {emp.status === "active" ? t.adminHr.activeStatus : t.adminHr.inactiveStatus}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex gap-1">
+                      <button onClick={() => openEdit(emp)} className="p-1.5 rounded-lg hover:bg-bg-card text-text-muted hover:text-accent-gold transition-all"><Pencil size={15} /></button>
+                      <button onClick={() => handleDelete(emp.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-text-muted hover:text-red-400 transition-all"><Trash2 size={15} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {employees.map((emp) => (
+            <div key={emp.id} className="card aspect-square p-5 flex flex-col items-center justify-center text-center relative group">
+              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => openEdit(emp)} className="p-1.5 rounded-lg hover:bg-bg-panel text-text-muted hover:text-accent-gold transition-all"><Pencil size={14} /></button>
+                <button onClick={() => handleDelete(emp.id)} className="p-1.5 rounded-lg hover:bg-red-500/10 text-text-muted hover:text-red-400 transition-all"><Trash2 size={14} /></button>
+              </div>
+              <div className="w-14 h-14 bg-purple-400/20 rounded-full flex items-center justify-center flex-shrink-0 mb-3">
+                <span className="text-purple-400 font-bold text-lg">{emp.name[0]}</span>
+              </div>
+              <p className="text-text-primary text-sm font-semibold line-clamp-1">{emp.name}</p>
+              <p className="text-text-muted text-xs mt-1">{emp.position}</p>
+              <p className="text-text-muted text-xs">{emp.department}</p>
+              <span className={`text-xs px-2 py-0.5 rounded-full border mt-2 ${emp.status === "active" ? "bg-green-500/10 text-green-400 border-green-500/20" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
+                {emp.status === "active" ? t.adminHr.activeStatus : t.adminHr.inactiveStatus}
+              </span>
+              <p className="text-accent-gold text-sm font-bold mt-2">{formatPrice(emp.salary)}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

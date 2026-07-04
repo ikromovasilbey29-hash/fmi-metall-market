@@ -910,6 +910,8 @@ const ru: Translations = {
     cancel: "Отмена",
     save: "Сохранить",
     add: "Добавить",
+    viewTable: "Вид таблицы",
+    viewGrid: "Вид карточек",
     tableEmployee: "Сотрудник",
     tablePosition: "Должность",
     tableDepartment: "Отдел",
