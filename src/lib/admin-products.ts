@@ -103,6 +103,16 @@ export function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
+/** Buyurtma qabul qilingach mahsulot zaxirasini kamaytiradi (haqiqiy manba — admin panel shu yerdan o'qiydi) */
+export function decreaseStock(productId: string, quantity: number) {
+  if (typeof window === "undefined") return;
+  const all = lsLoad();
+  const updated = all.map((p) =>
+    p.id === productId ? { ...p, stock: Math.max(0, p.stock - quantity) } : p
+  );
+  lsSave(updated);
+}
+
 export function stockStatus(stock: number, minStock: number) {
   if (stock <= 0)       return { label: "Tugagan", cls: "bg-red-500/15 text-red-400 border-red-500/25" };
   if (stock < minStock) return { label: "Kam",     cls: "bg-orange-500/15 text-orange-400 border-orange-500/25" };

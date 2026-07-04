@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
-import { useInventoryStore } from "@/store/inventoryStore";
 import { useUserStore } from "@/store/userStore";
 import { formatPrice, formatPhoneNumber } from "@/lib/utils";
 import { addOrder } from "@/lib/orders";
+import { decreaseStock } from "@/lib/admin-products";
 import { Loader2, Package, ClipboardList } from "lucide-react";
 import Link from "next/link";
 import { useT } from "@/hooks/useT";
@@ -14,7 +14,6 @@ import { useT } from "@/hooks/useT";
 export default function CheckoutPage() {
   const router = useRouter();
   const { items, getTotalPrice, clearCart } = useCartStore();
-  const { decreaseStock } = useInventoryStore();
   const user = useUserStore((s) => s.user);
   const [loading, setLoading] = useState(false);
   const t = useT();
