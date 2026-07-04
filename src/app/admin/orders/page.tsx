@@ -12,8 +12,24 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [filter, setFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<OrderRecord | null>(null);
+  const [useApi, setUseApi] = useState(true);
 
-  const refresh = useCallback(() => setOrders(lsLoad()), []);
+  const refresh = useCallback(async () => {
+    if (useApi) {
+      try {
+        const res = await fetch("/api/orders", { signal: AbortSignal.timeout(5000) });
+        const json = await res.json();
+        if (json.success) {
+          setOrders(json.data);
+          return;
+        }
+        throw new Error(json.error);
+      } catch {
+        setUseApi(false);
+      }
+    }
+    setOrders(lsLoad());
+  }, [useApi]);
 
   useEffect(() => {
     refresh();
@@ -61,11 +77,27 @@ export default function AdminOrdersPage() {
 
   const filtered = filter === "all" ? orders : orders.filter(o => o.status === filter);
 
-  const handleStatusChange = (orderId: string, newStatus: string) => {
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
     const status = newStatus as OrderStatus;
-    updateOrderStatus(orderId, status);
     setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status } : o));
     if (selectedOrder?.id === orderId) setSelectedOrder(prev => prev ? { ...prev, status } : null);
+
+    if (useApi) {
+      try {
+        const res = await fetch(`/api/orders/${orderId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error);
+        toast.success(`${t.adminOrders.statusUpdated} ${statusMap[status]?.label}`);
+        return;
+      } catch {
+        // API muvaffaqiyatsiz bo'lsa localStorage'ga tushamiz
+      }
+    }
+    updateOrderStatus(orderId, status);
     toast.success(`${t.adminOrders.statusUpdated} ${statusMap[status]?.label}`);
   };
 

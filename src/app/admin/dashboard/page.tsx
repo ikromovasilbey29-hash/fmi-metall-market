@@ -24,8 +24,15 @@ export default function AdminDashboardPage() {
   const [allOrders, setAllOrders] = useState<OrderRecord[]>([]);
   const [productCount, setProductCount] = useState(0);
 
-  const refresh = useCallback(() => {
-    setAllOrders(lsLoad());
+  const refresh = useCallback(async () => {
+    try {
+      const res = await fetch("/api/orders", { signal: AbortSignal.timeout(5000) });
+      const json = await res.json();
+      if (json.success) setAllOrders(json.data);
+      else throw new Error(json.error);
+    } catch {
+      setAllOrders(lsLoad());
+    }
     import("@/lib/product-store").then(({ getAllProducts }) => {
       setProductCount(getAllProducts().length);
     });

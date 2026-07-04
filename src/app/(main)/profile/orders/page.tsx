@@ -12,8 +12,19 @@ export default function OrdersPage() {
   const user = useUserStore((s) => s.user);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
 
-  const refresh = useCallback(() => {
-    setOrders(getOrdersByUser(user?.email || "guest"));
+  const refresh = useCallback(async () => {
+    const email = user?.email || "guest";
+    try {
+      const res = await fetch(`/api/orders?email=${encodeURIComponent(email)}`, { signal: AbortSignal.timeout(5000) });
+      const json = await res.json();
+      if (json.success) {
+        setOrders(json.data);
+        return;
+      }
+      throw new Error(json.error);
+    } catch {
+      setOrders(getOrdersByUser(email));
+    }
   }, [user?.email]);
 
   useEffect(() => {

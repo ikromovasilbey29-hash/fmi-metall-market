@@ -84,7 +84,6 @@ model Product {
   category    Category     @relation(fields: [categoryId], references: [id])
   metalType   MetalType?   @relation(fields: [metalTypeId], references: [id])
   favorites   Favorite[]
-  orderItems  OrderItem[]
   compareList CompareItem[]
 
   @@map("products")
@@ -127,7 +126,8 @@ model CompareItem {
 
 model Order {
   id          String      @id @default(cuid())
-  userId      String
+  userId      String?
+  userEmail   String      @default("guest") // buyurtma bergan mijoz (login tizimi bo'lmagani uchun email/telefon bilan aniqlanadi)
   fullName    String
   phone       String
   email       String
@@ -138,21 +138,22 @@ model Order {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  user  User        @relation(fields: [userId], references: [id])
+  user  User?       @relation(fields: [userId], references: [id])
   items OrderItem[]
 
   @@map("orders")
 }
 
 model OrderItem {
-  id        String @id @default(cuid())
-  orderId   String
-  productId String
-  quantity  Int
-  price     Float
+  id          String @id @default(cuid())
+  orderId     String
+  productId   String
+  productName String
+  unit        String @default("kg")
+  quantity    Int
+  price       Float
 
-  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product @relation(fields: [productId], references: [id])
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("order_items")
 }

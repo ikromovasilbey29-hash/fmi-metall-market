@@ -59,24 +59,35 @@ export default function CheckoutPage() {
       })),
     };
 
-    // Buyurtmani darhol mahalliy saqlaymiz — admin panelda va profilda ko'rinishi uchun
-    const order = addOrder(orderPayload);
-
-    // API mavjud bo'lsa fon rejimida sinab ko'ramiz (kelajakda haqiqiy backend uchun)
+    let orderId: string;
     try {
-      await fetch("/api/orders", {
+      const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, items: orderPayload.items, totalPrice: orderPayload.totalPrice }),
+        body: JSON.stringify({
+          userEmail: orderPayload.userEmail,
+          fullName: orderPayload.fullName,
+          phone: orderPayload.phone,
+          email: orderPayload.email,
+          address: orderPayload.address,
+          paymentType: orderPayload.paymentType,
+          items: orderPayload.items,
+          totalPrice: orderPayload.totalPrice,
+        }),
       });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      orderId = data.data.id;
     } catch {
-      // Fon so'rovi muvaffaqiyatsiz bo'lsa ham buyurtma allaqachon saqlangan
+      // Server bilan bog'lanib bo'lmasa — mahalliy saqlaymiz (offline zaxira)
+      const order = addOrder(orderPayload);
+      orderId = order.id;
     }
 
     items.forEach((item) => decreaseStock(item.product.id, item.quantity));
     clearCart();
     setLoading(false);
-    router.push(`/order-success?id=${order.id}`);
+    router.push(`/order-success?id=${orderId}`);
   };
 
   return (
